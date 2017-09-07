@@ -18,6 +18,8 @@ var path = require('path');
 var messages = {};
 messages.results = [{username: 'MaxPower', text: 'This ROCKS!!!'}];
 
+var objectId = 0;
+
 // These headers will allow Cross-Origin Resource Sharing (CORS).
 // This code allows this server to talk to websites that
 // are on different domains, for instance, your chat client.
@@ -28,15 +30,16 @@ messages.results = [{username: 'MaxPower', text: 'This ROCKS!!!'}];
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
 
-var defaultCorsHeaders = {
+var headers = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   // 'Access-Control-Allow-Credentials': false,
   'Access-Control-Allow-Headers': 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept',
-  'Access-Control-Max-Age': 10 // Seconds.
+  'Access-Control-Max-Age': 10, // Seconds.
+  'Content-Type': 'application/json',
 };
 
-var requestHandler = function(request, response) {
+module.exports = function requestHandler(request, response) {
   // Request and Response come from node's http module.
   //
   // They include information about both the incoming request, such as
@@ -51,7 +54,7 @@ var requestHandler = function(request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
-  console.log('Serving request type ' + request.method + ' for url ' + request.url);
+  // console.log('Serving request type ' + request.method + ' for url ' + request.url);
   // The outgoing status.
   // var statusCode = 200;
 
@@ -60,15 +63,6 @@ var requestHandler = function(request, response) {
     '201': 201,
     '404': 404
   };
-
-  // See the note below about CORS headers.
-  var headers = defaultCorsHeaders;
-
-  // Tell the client we are sending them plain text.
-  //
-  // You will need to change this if you are sending something
-  // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = 'application/json';
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
@@ -86,26 +80,26 @@ var requestHandler = function(request, response) {
     response.writeHead(statusCode[200], headers);
     response.end();
   }
-
-  console.log(request.url);
+  if (request.method === 'GET') {
+    // console.log('I\'m in the GET');
+    response.writeHead(statusCode[200], headers);
+    response.end(JSON.stringify(messages));
+  } else if (request.method === 'POST') {
   
-  if (/^\/classes\/messages/g.test(request.url)) {
-    
-    if (request.method === 'GET') {
-      console.log('I\'m in the GET');
-      response.writeHead(statusCode[200], headers);
-      response.end(JSON.stringify(messages));
-    } else if (request.method === 'POST') {
-      response.writeHead(statusCode[201], headers);
-      // request._postData
-      messages.results.push(request._postData);
-      console.log(messages);
-      response.end();
-    }
-  } else {
-    response.writeHead(statusCode[404], headers);
-    response.end();
+    let body = '';
+    request.on('data', (chunk) => {
+      body += chunk;
+    });
+    request.on('end', () => {
+      
+      body = JSON.parse(body);
+      messages.results.push(body);
+    });
+    // console.log(body, 'what is body');
+    // messages.results.push(request._postData);
+    // console.log(messages);
+    response.writeHead(statusCode[201], headers);
+    response.end(JSON.stringify(messages));
   }
-};
 
-exports.requestHandler = requestHandler;
+};
