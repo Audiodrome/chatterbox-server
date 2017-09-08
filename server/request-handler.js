@@ -1,3 +1,5 @@
+var fs = require('fs');
+
 var messages = {};
 messages.results = [
   {username: 'MaxPower', text: 'This ROCKS!!!'},
@@ -54,6 +56,7 @@ var requestHandler = function (request, response) {
     '201': 201,
     '404': 404
   };
+
   if (request.method === 'OPTIONS') {
     sendResponse(request, response, statusCode[200]);
   } else if (request.method === 'GET') {

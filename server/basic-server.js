@@ -1,6 +1,7 @@
 /* Import node's http module: */
 var http = require('http');
 var url = require ('url');
+var fs = require ('fs');
 var msgreq = require('./request-handler.js');
 
 // Every server needs to listen on a port with a unique number. The
@@ -28,10 +29,9 @@ var routes = {
 };
 
 var server = http.createServer(function(req, res) {
-  // console.log();
+  // console.log(url.parse(req.url));
   var route = routes[url.parse(req.url).pathname];
   // console.log(route);
-  // console.log(req.url);
   if (route) {
     route.requestHandler(req, res);
   } else {
